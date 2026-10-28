@@ -1,3 +1,4 @@
+import {SupportInbox} from './support-inbox';
 import {Component,Input,OnChanges,DestroyRef,inject,signal,output} from '@angular/core';
 import {CommonModule} from '@angular/common';
 import {FormsModule} from '@angular/forms';
@@ -9,7 +10,7 @@ import {NotificationService} from '../../core/notifications/notification.service
 import {ADMIN_MODULES} from './admin-modules';
 type Row=Record<string,any>;
 interface Field {key:string;label:string;type?:string;required?:boolean;max?:number;options?:{id:string;nombre:string}[];}
-@Component({selector:'app-operations-admin',imports:[CommonModule,FormsModule,RouterLink,DialogFocus],templateUrl:'./operations-admin.html',styleUrl:'./operations-admin.scss'})
+@Component({selector:'app-operations-admin',imports:[SupportInbox,CommonModule,FormsModule,RouterLink,DialogFocus],templateUrl:'./operations-admin.html',styleUrl:'./operations-admin.scss'})
 export class OperationsAdmin implements OnChanges {
  @Input({required:true}) section='';readonly busyChange=output<boolean>();
  private http=inject(HttpClient);private destroy=inject(DestroyRef);private notes=inject(NotificationService);private sequence=0;

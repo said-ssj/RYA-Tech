@@ -1,8 +1,9 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, DestroyRef, OnInit, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { firstValueFrom } from 'rxjs';
+import { firstValueFrom, Subscription } from 'rxjs';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { AuthService } from '../../core/auth/auth.service';
 import { AdvisorBootstrap, BuilderDraftUi, BuilderMode, BuilderValidation, ComponentOption, CpuComparison, SavedConfiguration } from './advisor.models';
 import { AdvisorService } from './advisor.service';
@@ -24,6 +25,8 @@ const EMPTY_DRAFT: BuilderDraftUi = {
 })
 export class Advisor implements OnInit {
   private readonly api = inject(AdvisorService);
+  private readonly destroyRef = inject(DestroyRef);
+  private optionsRequest?: Subscription;
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   protected readonly auth = inject(AuthService);
@@ -70,16 +73,53 @@ export class Advisor implements OnInit {
     void this.router.navigate([], { relativeTo: this.route, queryParams: { modo: mode }, queryParamsHandling: 'merge', replaceUrl: true });
   }
 
+  toggleComponentType(code: string): void {
+    if (this.draft.activeComponentCode !== code) { this.selectComponentType(code); return; }
+    this.optionsRequest?.unsubscribe();
+    this.draft.activeComponentCode = null;
+    this.options.set([]);
+    this.optionsStatus.set('idle');
+    this.persistDraft();
+  }
+
   selectComponentType(code: string): void {
+    this.optionsRequest?.unsubscribe();
     this.draft.activeComponentCode = code;
+    if (this.peripheralTypes().some(type=>type.code===code)) this.peripheralsOpen.set(true);
     this.options.set([]);
     this.selectedBrand.set(null);
     this.optionsStatus.set('loading');
     this.persistDraft();
-    this.api.getCompatibleOptions(code, Object.values(this.selection()).map(item => item.id)).subscribe({
+    this.optionsRequest = this.api.getCompatibleOptions(code, Object.values(this.selection()).map(item => item.id)).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: options => { this.options.set(options); this.optionsStatus.set('ready'); },
       error: () => this.optionsStatus.set('error'),
     });
+  }
+
+  engineLoading(): boolean { return this.status() === 'loading' || this.optionsStatus() === 'loading' || this.recommendationStatus() === 'loading'; }
+  engineStatus(): string {
+    if (this.engineLoading()) return 'Cargando...';
+    if (this.status() === 'error' || this.optionsStatus() === 'error') return 'No se pudo cargar';
+    return this.draft.activeComponentCode && this.optionsStatus() === 'ready' && this.options().length ? 'Piezas encontradas' : 'Motor listo';
+  }
+  componentIcon(code: string): string {
+    const key=this.normalizeCode(code);
+    if (/CPU|PROCESADOR/.test(key)) return 'memory';
+    if (/PLACA|MOTHERBOARD|BOARD|^MB$/.test(key)) return 'developer_board';
+    if (/RAM|MEMORIA/.test(key)) return 'memory_alt';
+    if (/ALMACEN|STORAGE|SSD|HDD/.test(key)) return 'hard_drive';
+    if (/GPU|GRAFICA/.test(key)) return 'developer_board';
+    if (/FUENTE|PSU/.test(key)) return 'power';
+    if (/GABINETE|CASE/.test(key)) return 'desktop_windows';
+    if (/COOLER|REFRIGER/.test(key)) return 'mode_fan';
+    if (/TECLADO|KEYBOARD/.test(key)) return 'keyboard';
+    if (/MOUSEPAD/.test(key)) return 'rectangle';
+    if (/MOUSE/.test(key)) return 'mouse';
+    if (/MONITOR/.test(key)) return 'monitor';
+    if (/MICROFONO/.test(key)) return 'mic';
+    if (/CAMARA|WEBCAM/.test(key)) return 'videocam';
+    if (/AUDIFONO|HEADSET|HEADPHONE/.test(key)||key==='AUD') return 'headphones';
+    return this.bootstrap()?.componentTypes.find(type=>type.code===code)?.icon || 'devices';
   }
 
   filteredOptions(): ComponentOption[] {
@@ -192,13 +232,12 @@ export class Advisor implements OnInit {
     return option.price - reference;
   }
 
-  peripheralTypes() {
-    const tokens = ['PERIF', 'TECL', 'MOUSE', 'MONITOR', 'AUDIO', 'AURIC', 'WEBCAM', 'MICROF'];
-    return (this.bootstrap()?.componentTypes ?? []).filter(type => {
-      const value = this.normalizeCode(`${type.code} ${type.name}`);
-      return tokens.some(token => value.includes(token));
-    });
+  private isPeripheral(type: {code:string;name:string}): boolean {
+    const value=this.normalizeCode(`${type.code} ${type.name}`);
+    return ['PERIF','TECL','KEYBOARD','MOUSE','MONITOR','AUDIO','AUDIF','AURIC','HEADPHONE','HEADSET','WEBCAM','CAMARA','MICROF'].some(token=>value.includes(token));
   }
+  mainComponentTypes() { return (this.bootstrap()?.componentTypes ?? []).filter(type=>!this.isPeripheral(type)); }
+  peripheralTypes() { return (this.bootstrap()?.componentTypes ?? []).filter(type=>this.isPeripheral(type)); }
 
   powerUsagePercent(): number {
     const draw = this.validation()?.powerDrawWatts ?? 0;
@@ -306,6 +345,7 @@ export class Advisor implements OnInit {
 
   private validateCurrentSelection(): void {
     const selection = this.selection();
+    if (this.draft.activeComponentCode) this.selectComponentType(this.draft.activeComponentCode);
     if (!Object.keys(selection).length) {
       this.validation.set(null);
       return;
@@ -337,7 +377,10 @@ export class Advisor implements OnInit {
   private loadBootstrap(): void {
     this.status.set('loading');
     this.api.getBootstrap().subscribe({
-      next: data => { this.bootstrap.set(data); this.status.set('ready'); },
+      next: data => { this.bootstrap.set(data); this.status.set('ready');
+        if (this.draft.activeComponentCode && data.componentTypes.some(type => type.code === this.draft.activeComponentCode)) this.selectComponentType(this.draft.activeComponentCode);
+        else this.draft.activeComponentCode = null;
+      },
       error: () => { this.bootstrap.set(null); this.status.set('error'); },
     });
   }

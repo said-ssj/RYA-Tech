@@ -1,3 +1,5 @@
+import {provideHttpClient} from '@angular/common/http';
+import {AuthService} from '../../core/auth/auth.service';
 import { TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router, convertToParamMap, provideRouter } from '@angular/router';
 import { BehaviorSubject, of, throwError } from 'rxjs';
@@ -13,7 +15,7 @@ describe('Centro de ayuda', () => {
     params.next(convertToParamMap({}));
     api.questions.mockReset().mockReturnValue(of(response));
     api.contact.mockReset().mockReturnValue(of({email:null,telefono:null,telefonoUrl:null,whatsappUrl:null,horario:null}));
-    TestBed.configureTestingModule({imports:[Help],providers:[provideRouter([]),
+    TestBed.configureTestingModule({imports:[Help],providers:[provideHttpClient(), {provide:AuthService,useValue:{isAuthenticated:()=>false,initialize:()=>Promise.resolve(null)}},provideRouter([]),
       {provide:ActivatedRoute,useValue:{queryParamMap:params}}, {provide:HelpService,useValue:api},
     ]});
   });

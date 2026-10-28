@@ -20,27 +20,24 @@ public class OfertaService {
     private final NamedParameterJdbcTemplate jdbc;
 
     private static final String BASE = """
-        WITH ofertas AS (
-          SELECT p.id AS producto_id, p.nombre, p.slug, m.nombre AS marca, m.slug AS marca_slug,
-            c.nombre AS categoria, c.slug AS categoria_slug, pp.precio_anterior, p.precio_base AS precio_actual,
-            ROUND((pp.precio_anterior-p.precio_base)*100/pp.precio_anterior, 2) AS descuento,
-            pp.precio_anterior-p.precio_base AS ahorro, o.nombre AS promocion, o.inicio_at, o.fin_at,
-            COALESCE((SELECT SUM(e.cantidad-e.reservado) FROM rya.existencias e
-              WHERE e.producto_id=p.id AND e.is_deleted=false),0) AS stock,
-            (SELECT i.url FROM rya.imagenes_producto i WHERE i.producto_id=p.id AND i.is_deleted=false
-              ORDER BY i.principal DESC, i.posicion ASC, i.id LIMIT 1) AS imagen,
-            ROW_NUMBER() OVER (PARTITION BY p.id ORDER BY o.fin_at ASC NULLS LAST,
-              o.inicio_at DESC NULLS LAST, o.id) AS prioridad
-          FROM rya.promociones_productos pp
-          JOIN rya.promociones o ON o.id=pp.promocion_id
-          JOIN rya.productos p ON p.id=pp.producto_id
-          JOIN rya.categorias c ON c.id=p.categoria_id
-          LEFT JOIN rya.marcas m ON m.id=p.marca_id
+        WITH precios AS (
+          SELECT p.id AS producto_id,p.nombre,p.slug,m.nombre AS marca,m.slug AS marca_slug,
+            c.nombre AS categoria,c.slug AS categoria_slug,
+            CASE WHEN o.descuento_porcentaje>0 THEN p.precio_base ELSE pp.precio_anterior END AS precio_anterior,
+            GREATEST(0.01,ROUND(p.precio_base*(100-COALESCE(o.descuento_porcentaje,0))/100,2)) AS precio_actual,
+            o.nombre AS promocion,o.inicio_at,o.fin_at,o.id AS promocion_id,
+            COALESCE((SELECT SUM(e.cantidad-e.reservado) FROM rya.existencias e WHERE e.producto_id=p.id AND e.is_deleted=false),0) AS stock,
+            (SELECT i.url FROM rya.imagenes_producto i WHERE i.producto_id=p.id AND i.is_deleted=false ORDER BY i.principal DESC,i.posicion ASC,i.id LIMIT 1) AS imagen
+          FROM rya.promociones_productos pp JOIN rya.promociones o ON o.id=pp.promocion_id
+          JOIN rya.productos p ON p.id=pp.producto_id JOIN rya.categorias c ON c.id=p.categoria_id LEFT JOIN rya.marcas m ON m.id=p.marca_id
           WHERE pp.is_deleted=false AND o.is_deleted=false AND o.activa=true
-            AND (o.inicio_at IS NULL OR o.inicio_at <= :ahora)
-            AND (o.fin_at IS NULL OR o.fin_at > :ahora)
+            AND (o.inicio_at IS NULL OR o.inicio_at<=:ahora) AND (o.fin_at IS NULL OR o.fin_at>:ahora)
             AND p.is_deleted=false AND p.activo=true AND p.vendible=true
-            AND pp.precio_anterior>p.precio_base
+        ), ofertas AS (
+          SELECT precios.*,ROUND((precio_anterior-precio_actual)*100/precio_anterior,2) AS descuento,
+            precio_anterior-precio_actual AS ahorro,
+            ROW_NUMBER() OVER(PARTITION BY producto_id ORDER BY precio_actual,fin_at ASC NULLS LAST,promocion_id) AS prioridad
+          FROM precios WHERE precio_anterior>precio_actual AND precio_anterior>0
         ), vigentes AS (SELECT * FROM ofertas WHERE prioridad=1)
         """;
 

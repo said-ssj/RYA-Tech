@@ -44,7 +44,7 @@ public class CpuMapper {
                 .potenciaMaximaW(cpu.getPotenciaMaximaW())
                 .tieneGraficosIntegrados(cpu.getTieneGraficosIntegrados())
                 .modeloGraficos(cpu.getModeloGraficos())
-                .precio(p != null ? p.getPrecioBase() : null)
+                .precio(p != null ? p.getPrecioVenta() : null)
                 .stockDisponible(stockDisponible != null ? stockDisponible : 0)
                 .imagenUrl(imagenUrl)
                 .build();
@@ -81,7 +81,7 @@ public class CpuMapper {
                 .potenciaMaximaW(cpu.getPotenciaMaximaW())
                 .tieneGraficosIntegrados(cpu.getTieneGraficosIntegrados())
                 .modeloGraficos(cpu.getModeloGraficos())
-                .precio(p != null ? p.getPrecioBase() : null)
+                .precio(p != null ? p.getPrecioVenta() : null)
                 .stockDisponible(stockDisponible != null ? stockDisponible : 0)
                 .imagenes(imagenesDto)
                 .benchmarks(benchmarksDto)

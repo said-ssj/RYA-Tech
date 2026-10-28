@@ -1,3 +1,4 @@
+import { CustomerFeedback } from '../../shared/customer-feedback/customer-feedback';
 import { CurrencyPipe, DatePipe } from '@angular/common';
 import { Component, DestroyRef, OnInit, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -18,7 +19,7 @@ type ViewState = 'loading' | 'ready' | 'error';
 
 @Component({
   selector: 'app-product-detail',
-  imports: [CurrencyPipe, DatePipe, RouterLink, FavoriteButton, LoadingState, RequestError, DialogFocus],
+  imports: [CustomerFeedback, CurrencyPipe, DatePipe, RouterLink, FavoriteButton, LoadingState, RequestError, DialogFocus],
   templateUrl: './product-detail.html',
   styleUrl: './product-detail.scss',
 })

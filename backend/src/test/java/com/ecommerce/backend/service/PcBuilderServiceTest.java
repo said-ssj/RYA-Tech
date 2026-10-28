@@ -504,6 +504,25 @@ class PcBuilderServiceTest {
         assertFalse(res.getRequiereActualizacionBios());
     }
 
+    @Test void opcionesSoloAceptanRelacionesVerificadasYReconocenCategoriasPlurales(){
+        var service=spy(pcBuilderService);
+        UUID ramId=UUID.randomUUID();
+        var board=Producto.builder().id(placaId).categoria(Categoria.builder().slug("placas-madre").build()).build();
+        var ram=Producto.builder().id(ramId).categoria(Categoria.builder().slug("memorias-ram").build()).build();
+        doReturn(ComponenteTipoDto.builder().productos(List.of(ProductoResumenDto.builder().id(ramId).build())).build()).when(service).listarComponentesPorTipo("RAM");
+        when(productoRepository.findConDetallesPorId(placaId)).thenReturn(Optional.of(board));
+        when(productoRepository.findConDetallesPorId(ramId)).thenReturn(Optional.of(ram));
+        var attrs=List.of(atributoTexto(board,"tipo_ram_placa","DDR5"),atributoTexto(ram,"tipo_ram","DDR5"),
+            atributoNumero(board,"capacidad_ram_max_placa_gb","128"),atributoNumero(ram,"capacidad_ram_gb","32"),
+            atributoNumero(board,"ranuras_ram_placa","4"),atributoNumero(ram,"modulos_ram","2"),
+            atributoNumero(board,"velocidad_ram_max_placa_mt_s","6400"),atributoNumero(ram,"velocidad_ram_mt_s","6000"));
+        when(valorAtributoProductoRepository.findConAtributoPorProductoIds(anyList())).thenReturn(attrs);
+        assertEquals(1,service.obtenerComponentesCompatibles("RAM",List.of(placaId)).size());
+        attrs.get(1).setValorTexto("DDR4");assertTrue(service.obtenerComponentesCompatibles("RAM",List.of(placaId)).isEmpty());
+        when(valorAtributoProductoRepository.findConAtributoPorProductoIds(anyList())).thenReturn(List.of());
+        assertTrue(service.obtenerComponentesCompatibles("RAM",List.of(placaId)).isEmpty());
+    }
+
     private ValorAtributoProducto atributoTexto(Producto producto, String codigo, String valor) {
         return ValorAtributoProducto.builder()
                 .producto(producto)

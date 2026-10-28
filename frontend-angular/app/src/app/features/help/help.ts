@@ -1,3 +1,4 @@
+import { CustomerFeedback } from '../../shared/customer-feedback/customer-feedback';
 import { Component, DestroyRef, OnInit, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
@@ -109,7 +110,7 @@ const DEFAULT_QUESTIONS: HelpQuestion[] = [
 
 @Component({
   selector: 'app-help',
-  imports: [RouterLink, LoadingState],
+  imports: [CustomerFeedback, RouterLink, LoadingState],
   templateUrl: './help.html',
   styleUrl: './help.scss',
 })

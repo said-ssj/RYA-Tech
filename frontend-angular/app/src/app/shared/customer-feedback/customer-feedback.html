@@ -1,0 +1,19 @@
+<section class="feedback-box" [attr.aria-label]="productId()?'Escribir una reseña':'Enviar una pregunta'">
+<h3>{{productId()?'Comparte tu opinión':'Envíanos tu pregunta'}}</h3>
+@if(!auth.isAuthenticated()){<p>Inicia sesión para {{productId()?'escribir una reseña':'enviar tu consulta y ver las respuestas'}}.</p><a class="button button-primary" routerLink="/login" [queryParams]="{returnUrl:returnUrl()}">Iniciar sesión</a>}
+@else {
+@if(message()){<p role="status">{{message()}}</p>}
+@if(!sent()){<form #feedback="ngForm" (ngSubmit)="submit()"><fieldset [disabled]="busy()">
+@if(productId()){<fieldset class="star-rating" (mouseleave)="hoverRating=0"><legend>Calificación</legend><div class="rating-options">@for(star of [1,2,3,4,5];track star){<label class="rating-star" [class.is-filled]="star <= (hoverRating || rating)" (mouseenter)="hoverRating=star"><input type="radio" name="rating" [value]="star" [checked]="rating===star" required (change)="rating=star;hoverRating=0" [attr.aria-label]="star+' de 5 estrellas'"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 2.5 14.94 8.46 21.52 9.42 16.76 14.06 17.88 20.62 12 17.52 6.12 20.62 7.24 14.06 2.48 9.42 9.06 8.46Z" /></svg></label>}</div><small aria-live="polite">{{rating ? rating+' de 5 estrellas' : 'Selecciona tu calificación'}}</small></fieldset>}
+@else{<label>Asunto<input name="subject" [(ngModel)]="subject" minlength="5" maxlength="220" required></label>}
+<label>{{productId()?'Tu reseña':'Tu pregunta'}}<textarea name="message" [(ngModel)]="text" rows="4" minlength="10" [maxlength]="productId()?2000:5000" required></textarea></label>
+@if(productId()){<p>La reseña se publicará después de ser revisada. No incluyas datos personales.</p>}
+<button class="button button-primary" type="submit" [disabled]="feedback.invalid||busy()|| (!!productId() && rating===0)">{{busy()?'Enviando…':productId()?'Enviar reseña':'Enviar pregunta'}}</button>
+</fieldset></form>}
+@if(!productId()) {<h3>Mis consultas</h3><button class="button button-secondary" type="button" (click)="load()" [disabled]="loading()">Actualizar consultas</button>
+@if(loading()){<p role="status">Cargando consultas…</p>}
+@if(listError()){<p role="alert">No pudimos consultar tus mensajes. Pulsa Actualizar consultas para reintentar.</p>}
+@for(ticket of tickets();track ticket.id){<article><h4>{{ticket.asunto}}</h4><small>{{ticket.estado}}</small>@for(item of ticket.mensajes;track $index){<p><strong>{{item.cliente?'Tú':'Equipo RYA Tech'}}:</strong> {{item.contenido}}</p>}</article>}
+@if(sent()){<button class="button button-secondary" type="button" (click)="sent.set(false);message.set('')">Hacer otra pregunta</button>}}
+}
+</section>

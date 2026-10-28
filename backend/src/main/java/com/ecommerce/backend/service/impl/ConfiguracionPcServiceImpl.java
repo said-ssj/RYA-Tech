@@ -105,7 +105,7 @@ public class ConfiguracionPcServiceImpl implements ConfiguracionPcService {
                     .producto(producto)
                     .cantidad(request.getCantidad())
                     .bloqueado(Boolean.TRUE.equals(request.getBloqueado()))
-                    .precioSnapshot(producto.getPrecioBase())
+                    .precioSnapshot(producto.getPrecioVenta())
                     .build();
             componenteRepository.save(actual);
             componentes.add(actual);
@@ -113,7 +113,7 @@ public class ConfiguracionPcServiceImpl implements ConfiguracionPcService {
             actual.setProducto(producto);
             actual.setCantidad(request.getCantidad());
             actual.setBloqueado(Boolean.TRUE.equals(request.getBloqueado()));
-            actual.setPrecioSnapshot(producto.getPrecioBase());
+            actual.setPrecioSnapshot(producto.getPrecioVenta());
             componenteRepository.save(actual);
         } else {
             // El mismo producto y cantidad pueden desbloquearse de forma explícita.

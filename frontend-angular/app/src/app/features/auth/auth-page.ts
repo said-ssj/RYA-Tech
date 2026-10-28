@@ -105,12 +105,6 @@ export class AuthPage implements OnInit {
   }
 
   protected goBack(): void {
-    const returnUrl = this.requestedReturnUrl();
-    if (returnUrl) {
-      void this.router.navigateByUrl(returnUrl);
-      return;
-    }
-
     if (window.history.length > 1) {
       this.location.back();
       return;

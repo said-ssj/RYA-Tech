@@ -52,10 +52,10 @@ public class CarritoServiceImpl implements CarritoService {
 
         if (item == null) {
             item = ItemCarrito.builder().carrito(carrito).producto(producto).cantidad(cantidadFinal)
-                    .precioReferencia(producto.getPrecioBase()).build();
+                    .precioReferencia(producto.getPrecioVenta()).build();
         } else {
             item.setCantidad(cantidadFinal);
-            item.setPrecioReferencia(producto.getPrecioBase());
+            item.setPrecioReferencia(producto.getPrecioVenta());
         }
         itemRepository.save(item);
         return mapear(carrito);
@@ -71,7 +71,7 @@ public class CarritoServiceImpl implements CarritoService {
         validarProductoVendible(item.getProducto());
         validarStock(item.getProducto().getId(), request.getCantidad());
         item.setCantidad(request.getCantidad());
-        item.setPrecioReferencia(item.getProducto().getPrecioBase());
+        item.setPrecioReferencia(item.getProducto().getPrecioVenta());
         itemRepository.save(item);
         return mapear(carrito);
     }
@@ -111,10 +111,10 @@ public class CarritoServiceImpl implements CarritoService {
                         .findByCarritoIdAndProductoIdAndIsDeletedFalse(destino.getId(), producto.getId()).orElse(null);
                 if (destinoItem == null) {
                     destinoItem = ItemCarrito.builder().carrito(destino).producto(producto)
-                            .cantidad(itemOrigen.getCantidad()).precioReferencia(producto.getPrecioBase()).build();
+                            .cantidad(itemOrigen.getCantidad()).precioReferencia(producto.getPrecioVenta()).build();
                 } else {
                     destinoItem.setCantidad(destinoItem.getCantidad() + itemOrigen.getCantidad());
-                    destinoItem.setPrecioReferencia(producto.getPrecioBase());
+                    destinoItem.setPrecioReferencia(producto.getPrecioVenta());
                 }
                 itemRepository.save(destinoItem);
             }
@@ -146,7 +146,7 @@ public class CarritoServiceImpl implements CarritoService {
                 || Boolean.TRUE.equals(producto.getIsDeleted())) {
             throw new BadRequestException("El producto ya no está disponible para la venta");
         }
-        if (producto.getPrecioBase() == null) {
+        if (producto.getPrecioVenta() == null) {
             throw new BadRequestException("El producto no tiene un precio vigente");
         }
     }
@@ -172,7 +172,7 @@ public class CarritoServiceImpl implements CarritoService {
                     String imagen = imagenProductoRepository
                             .findFirstByProductoIdAndPrincipalTrueAndIsDeletedFalse(producto.getId())
                             .map(ImagenProducto::getUrl).orElse(null);
-                    BigDecimal precioActual = producto.getPrecioBase();
+                    BigDecimal precioActual = producto.getPrecioVenta();
                     boolean actualizado = item.getPrecioReferencia() != null && precioActual != null
                             && item.getPrecioReferencia().compareTo(precioActual) != 0;
                     return ItemCarritoDto.builder().id(item.getId()).productoId(producto.getId())

@@ -161,10 +161,10 @@ public class ProductoServiceImpl implements ProductoService {
 
             // Filtro por rango de precio
             if (precioMin != null) {
-                predicates.add(cb.greaterThanOrEqualTo(root.get("precioBase"), precioMin));
+                predicates.add(cb.greaterThanOrEqualTo(root.get("precioVenta"), precioMin));
             }
             if (precioMax != null) {
-                predicates.add(cb.lessThanOrEqualTo(root.get("precioBase"), precioMax));
+                predicates.add(cb.lessThanOrEqualTo(root.get("precioVenta"), precioMax));
             }
 
             // El filtro de stock forma parte de la consulta para conservar una paginación correcta.
@@ -218,7 +218,7 @@ public class ProductoServiceImpl implements ProductoService {
         // Ordenamiento seguro
         String campoOrden = "nombre";
         if ("precio".equalsIgnoreCase(sortBy) || "precioBase".equalsIgnoreCase(sortBy)) {
-            campoOrden = "precioBase";
+            campoOrden = "precioVenta";
         } else if ("created".equalsIgnoreCase(sortBy) || "createdAt".equalsIgnoreCase(sortBy)) {
             campoOrden = "createdAt";
         }
@@ -430,7 +430,7 @@ public class ProductoServiceImpl implements ProductoService {
 
         String campoOrden = "nombre";
         if ("precio".equalsIgnoreCase(sortBy) || "precioBase".equalsIgnoreCase(sortBy)) {
-            campoOrden = "precioBase";
+            campoOrden = "precioVenta";
         } else if ("created".equalsIgnoreCase(sortBy) || "createdAt".equalsIgnoreCase(sortBy)) {
             campoOrden = "createdAt";
         } else if ("updated".equalsIgnoreCase(sortBy) || "updatedAt".equalsIgnoreCase(sortBy)) {

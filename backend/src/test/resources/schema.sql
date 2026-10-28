@@ -344,3 +344,8 @@ CREATE TABLE IF NOT EXISTS rya.clientes_pago (
  customer_id varchar(100),
  CONSTRAINT ux_clientes_pago_usuario_entorno UNIQUE(usuario_id,entorno)
 );
+
+CREATE TABLE IF NOT EXISTS rya.tickets_soporte(id uuid PRIMARY KEY,usuario_id uuid NOT NULL,asunto varchar(220) NOT NULL,estado varchar(35) NOT NULL DEFAULT 'ABIERTO',prioridad varchar(25) NOT NULL DEFAULT 'MEDIA',created_at timestamp with time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,is_deleted boolean NOT NULL DEFAULT false);
+CREATE TABLE IF NOT EXISTS rya.mensajes_ticket(id uuid PRIMARY KEY,ticket_id uuid NOT NULL REFERENCES rya.tickets_soporte(id),autor_id uuid NOT NULL,contenido text NOT NULL,interno boolean NOT NULL DEFAULT false,created_at timestamp with time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,is_deleted boolean NOT NULL DEFAULT false);
+
+ALTER TABLE rya.promociones ADD COLUMN IF NOT EXISTS updated_at timestamp with time zone NOT NULL DEFAULT CURRENT_TIMESTAMP;

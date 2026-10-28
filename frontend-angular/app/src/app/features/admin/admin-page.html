@@ -66,6 +66,7 @@
       @else if (!design && ['pedidos','resenas','contenido','compatibilidad','calidad','postventa','reportes'].includes(section)) {
         <app-operations-admin [section]="section" (busyChange)="importBusy.set($event)"></app-operations-admin>
       }
+      @else if (section === 'ofertas' && !design) { <app-pricing-admin (busyChange)="importBusy.set($event)" /> }
       @else if (section === 'envios'  && !design) {
         <app-shipping-admin (busyChange)="importBusy.set($event)"></app-shipping-admin>
       }

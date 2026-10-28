@@ -50,9 +50,10 @@
           }
         </section>
 
-        <section class="page-shell reviews-section" id="resenas"><div class="section-heading"><div><p class="eyebrow">OPINIONES VERIFICADAS</p><h2>Reseñas del producto</h2></div>@if (reviews().total > 0) { <div class="review-score"><strong>{{ reviews().average }}</strong><span><span class="stars">@for (star of stars; track star) { <i [class.is-filled]="star <= reviews().average">★</i> }</span><small>{{ reviews().total }} publicadas</small></span></div> }</div>
+        <section class="page-shell reviews-section" id="resenas"><div class="section-heading"><div><p class="eyebrow">OPINIONES DE LA COMUNIDAD</p><h2>Reseñas del producto</h2></div>@if (reviews().total > 0) { <div class="review-score"><strong>{{ reviews().average }}</strong><span><span class="stars">@for (star of stars; track star) { <i [class.is-filled]="star <= reviews().average">★</i> }</span><small>{{ reviews().total }} publicadas</small></span></div> }</div>
+          <app-customer-feedback [productId]="item.id" />
           @if (reviewsError()) { <app-request-error title="No pudimos cargar las reseñas" (retry)="retry()" /> }
-          @else if (reviews().items.length) { <div class="reviews-list">@for (review of reviews().items; track review.id) { <article><header><div><strong>{{ review.author }}</strong><small>Compra verificada · {{ review.date | date:'mediumDate':'':'es-PE' }}</small></div><span class="stars" [attr.aria-label]="review.rating + ' de 5 estrellas'">@for (star of stars; track star) { <i [class.is-filled]="star <= review.rating">★</i> }</span></header><p>{{ review.comment || 'El cliente dejó una calificación sin comentario.' }}</p></article> }</div> }
+          @else if (reviews().items.length) { <div class="reviews-list">@for (review of reviews().items; track review.id) { <article><header><div><strong>{{ review.author }}</strong><small>Opinión moderada · {{ review.date | date:'mediumDate':'':'es-PE' }}</small></div><span class="stars" [attr.aria-label]="review.rating + ' de 5 estrellas'">@for (star of stars; track star) { <i [class.is-filled]="star <= review.rating">★</i> }</span></header><p>{{ review.comment || 'El cliente dejó una calificación sin comentario.' }}</p></article> }</div> }
           @else { <div class="section-empty reviews-empty"><span class="material-symbols-rounded">reviews</span><h3>Aún no hay reseñas publicadas</h3><p>Las opiniones aparecerán aquí después de ser verificadas y aprobadas.</p></div> }
         </section>
 

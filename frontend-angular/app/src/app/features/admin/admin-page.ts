@@ -1,3 +1,4 @@
+import {PricingAdmin} from './pricing-admin';
 import { Component, DestroyRef, HostListener, OnInit, ViewChild, ViewEncapsulation, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, NgForm } from '@angular/forms';
@@ -26,11 +27,12 @@ import { SidebarResize } from './sidebar-resize';
 @Component({
   selector: 'app-admin-page',
   encapsulation: ViewEncapsulation.None,
-  imports: [CommonModule, FormsModule, RouterLink, RouterLinkActive, TechnicalEditor, ProductMedia, DialogFocus, ProductImport, CatalogReferences, ProductTechnicalForm, SidebarResize, ShippingAdmin, OperationsAdmin, TechnicalFieldManager],
+  imports: [PricingAdmin, CommonModule, FormsModule, RouterLink, RouterLinkActive, TechnicalEditor, ProductMedia, DialogFocus, ProductImport, CatalogReferences, ProductTechnicalForm, SidebarResize, ShippingAdmin, OperationsAdmin, TechnicalFieldManager],
   styleUrls: ['./admin.scss', './sidebar-resize.scss', './admin-filter.scss'],
   templateUrl: './admin-page.html',
 })
 export class AdminPage implements OnInit {
+  @ViewChild(PricingAdmin) pricingAdmin?: PricingAdmin;
   @ViewChild(TechnicalFieldManager) technicalFieldManager?: TechnicalFieldManager;
   @ViewChild(CatalogReferences) referencesEditor?: CatalogReferences;
   protected readonly customFieldsBusy = signal(false);
@@ -868,6 +870,7 @@ export class AdminPage implements OnInit {
   }
 
   canLeave(): boolean {
+    if (this.pricingAdmin && !this.pricingAdmin.canLeave()) return false;
     if (this.technicalFieldManager && !this.technicalFieldManager.canLeave()) return false;
     if (this.referencesEditor && !this.referencesEditor.canLeave()) return false;
     if (this.operationsAdmin && !this.operationsAdmin.canLeave()) return false;
@@ -1682,7 +1685,7 @@ export class AdminPage implements OnInit {
 
   @HostListener('window:beforeunload', ['$event'])
   protected warnPendingStock(event: BeforeUnloadEvent): void {
-    if (this.isSavingStock() || this.stockUncertain() || this.shippingAdmin?.hasPendingChanges() || this.operationsAdmin?.hasPendingChanges() || this.technicalFieldManager?.hasPendingChanges()) { event.preventDefault(); event.returnValue=''; }
+    if (this.pricingAdmin?.hasPendingChanges() || this.isSavingStock() || this.stockUncertain() || this.shippingAdmin?.hasPendingChanges() || this.operationsAdmin?.hasPendingChanges() || this.technicalFieldManager?.hasPendingChanges()) { event.preventDefault(); event.returnValue=''; }
   }
 
   private stockPendingKey(): string | null {

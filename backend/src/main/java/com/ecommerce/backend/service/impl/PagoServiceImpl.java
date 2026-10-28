@@ -76,10 +76,10 @@ public class PagoServiceImpl implements PagoService {
             var product=productoRepository.findConDetallesPorId(item.getProducto().getId())
                 .orElseThrow(()->new BadRequestException("Producto no disponible."));
             validateProduct(product,item.getCantidad());
-            var amount=product.getPrecioBase().multiply(BigDecimal.valueOf(item.getCantidad()));
+            var amount=product.getPrecioVenta().multiply(BigDecimal.valueOf(item.getCantidad()));
             subtotal=subtotal.add(amount);
             snapshots.add(PedidoItem.builder().productoId(product.getId()).sku(product.getSku()).nombreProducto(product.getNombre())
-                .precioUnitario(product.getPrecioBase()).cantidad(item.getCantidad()).subtotal(amount).build());
+                .precioUnitario(product.getPrecioVenta()).cantidad(item.getCantidad()).subtotal(amount).build());
         }
         var total=subtotal.add(shipping.getCosto());
         if(total.signum()<=0)throw new BadRequestException("El importe a pagar debe ser mayor que cero.");
@@ -100,7 +100,7 @@ public class PagoServiceImpl implements PagoService {
 
     private void validateProduct(Producto product,int quantity){
         if(quantity<1||!Boolean.TRUE.equals(product.getActivo())||!Boolean.TRUE.equals(product.getVendible())
-            ||Boolean.TRUE.equals(product.getIsDeleted())||product.getPrecioBase()==null)
+            ||Boolean.TRUE.equals(product.getIsDeleted())||product.getPrecioVenta()==null)
             throw new BadRequestException("Un producto del pedido ya no está disponible.");
         var stock=existenciaRepository.findStockDisponiblePorProductoId(product.getId());
         if(stock==null||stock<quantity)throw new BadRequestException("Stock insuficiente para "+product.getNombre()+".");
@@ -124,7 +124,7 @@ public class PagoServiceImpl implements PagoService {
             for(var item:pedido.getItems()){
                 var product=productoRepository.findConDetallesPorId(item.getProductoId()).orElseThrow(()->new BadRequestException("Producto no disponible."));
                 validateProduct(product,item.getCantidad());
-                if(product.getPrecioBase().compareTo(item.getPrecioUnitario())!=0)throw new ConflictException("Cambió un precio. Revisa y valida nuevamente tu compra.");
+                if(product.getPrecioVenta().compareTo(item.getPrecioUnitario())!=0)throw new ConflictException("Cambió un precio. Revisa y valida nuevamente tu compra.");
             }
             var payment=Pago.builder().pedido(pedido).pasarela("MERCADO_PAGO_ORDERS").monto(pedido.getTotal())
                 .moneda(pedido.getMoneda()).estado("processing").paymentMethodId(request.getPaymentMethodId()).build();

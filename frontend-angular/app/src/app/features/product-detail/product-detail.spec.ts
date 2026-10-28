@@ -1,3 +1,5 @@
+import {provideHttpClient} from '@angular/common/http';
+import {AuthService} from '../../core/auth/auth.service';
 import { TestBed } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap, provideRouter } from '@angular/router';
 import { BehaviorSubject, Subject, throwError } from 'rxjs';
@@ -18,7 +20,7 @@ describe('Recuperación del detalle de producto', () => {
   beforeEach(() => {
     params.next(convertToParamMap({ slug: 'cpu' }));
     getBySlug.mockReset().mockReturnValue(throwError(() => ({ status: 503 })));
-    TestBed.configureTestingModule({ imports: [ProductDetailComponent], providers: [provideRouter([]),
+    TestBed.configureTestingModule({ imports: [ProductDetailComponent], providers: [provideHttpClient(), {provide:AuthService,useValue:{isAuthenticated:()=>false,initialize:()=>Promise.resolve(null)}},provideRouter([]),
       { provide: ActivatedRoute, useValue: { paramMap: params } },
       { provide: ProductDetailService, useValue: { getBySlug } },
       { provide: CatalogService, useValue: {} }, { provide: CartService, useValue: {} },

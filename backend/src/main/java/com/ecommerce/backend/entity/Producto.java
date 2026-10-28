@@ -50,6 +50,11 @@ public class Producto {
     @Column(name = "precio_base", nullable = false, precision = 14, scale = 2)
     private BigDecimal precioBase;
 
+    @org.hibernate.annotations.Formula("(select greatest(0.01,round(precio_base * (100 - coalesce(max(promo.descuento_porcentaje),0)) / 100,2)) from rya.promociones_productos vinculo join rya.promociones promo on promo.id=vinculo.promocion_id where vinculo.producto_id=id and vinculo.is_deleted=false and promo.is_deleted=false and promo.activa=true and (promo.inicio_at is null or promo.inicio_at<=CURRENT_TIMESTAMP) and (promo.fin_at is null or promo.fin_at>CURRENT_TIMESTAMP))")
+    private BigDecimal precioVenta;
+
+    public BigDecimal getPrecioVenta(){return precioVenta!=null?precioVenta:precioBase;}
+
     @Column(name = "costo_referencia", precision = 14, scale = 2)
     private BigDecimal costoReferencia;
 

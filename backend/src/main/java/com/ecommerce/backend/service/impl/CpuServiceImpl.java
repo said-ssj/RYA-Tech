@@ -39,10 +39,10 @@ public class CpuServiceImpl implements CpuService {
                         c.getProducto().getMarca().getNombre().equalsIgnoreCase(marca.trim())))
                 .filter(c -> socket == null || c.getSocket().equalsIgnoreCase(socket.trim()))
                 .filter(c -> familia == null || c.getFamilia().equalsIgnoreCase(familia.trim()))
-                .filter(c -> precioMin == null || (c.getProducto().getPrecioBase() != null &&
-                        c.getProducto().getPrecioBase().compareTo(precioMin) >= 0))
-                .filter(c -> precioMax == null || (c.getProducto().getPrecioBase() != null &&
-                        c.getProducto().getPrecioBase().compareTo(precioMax) <= 0))
+                .filter(c -> precioMin == null || (c.getProducto().getPrecioVenta() != null &&
+                        c.getProducto().getPrecioVenta().compareTo(precioMin) >= 0))
+                .filter(c -> precioMax == null || (c.getProducto().getPrecioVenta() != null &&
+                        c.getProducto().getPrecioVenta().compareTo(precioMax) <= 0))
                 .map(this::construirResumenDto)
                 .toList();
     }

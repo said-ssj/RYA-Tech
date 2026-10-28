@@ -1,3 +1,4 @@
+import { Location } from '@angular/common';
 import { TestBed } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap, provideRouter, Router } from '@angular/router';
 import { NEVER, of, throwError } from 'rxjs';
@@ -73,5 +74,9 @@ describe('Auth form redirection without backend dependency',()=>{
   });
   it('does not show a warning when synchronization succeeds',async()=>{
     account.load.mockReturnValue(of({}));cart.linkToAccount.mockReturnValue(of({}));page.ngOnInit();await page.submit();await vi.advanceTimersByTimeAsync(15001);expect(notifications.show).not.toHaveBeenCalled();
+  });
+  it('regresa al historial sin reabrir la ruta protegida que pidió iniciar sesión',()=>{
+    query['returnUrl']='/compras';const back=vi.spyOn(TestBed.inject(Location),'back').mockImplementation(()=>{});
+    vi.spyOn(window.history,'length','get').mockReturnValue(2);page.goBack();expect(back).toHaveBeenCalled();expect(router.navigateByUrl).not.toHaveBeenCalled();
   });
 });

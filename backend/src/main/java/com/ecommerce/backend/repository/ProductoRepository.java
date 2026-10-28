@@ -52,10 +52,10 @@ public interface ProductoRepository extends JpaRepository<Producto, UUID>, JpaSp
 
     boolean existsBySlugAndIdNotAndIsDeletedFalse(String slug, UUID id);
 
-    @Query("SELECT MIN(p.precioBase) FROM Producto p WHERE p.activo = true AND p.vendible = true AND p.isDeleted = false")
+    @Query("SELECT MIN(p.precioVenta) FROM Producto p WHERE p.activo = true AND p.vendible = true AND p.isDeleted = false")
     BigDecimal findMinPrecioActivo();
 
-    @Query("SELECT MAX(p.precioBase) FROM Producto p WHERE p.activo = true AND p.vendible = true AND p.isDeleted = false")
+    @Query("SELECT MAX(p.precioVenta) FROM Producto p WHERE p.activo = true AND p.vendible = true AND p.isDeleted = false")
     BigDecimal findMaxPrecioActivo();
 
     @Query("SELECT p.categoria.id, COUNT(p) FROM Producto p WHERE p.activo = true AND p.vendible = true AND p.isDeleted = false GROUP BY p.categoria.id")
@@ -67,10 +67,10 @@ public interface ProductoRepository extends JpaRepository<Producto, UUID>, JpaSp
     @Query("SELECT p.marca.id, COUNT(p) FROM Producto p WHERE p.categoria.id = :categoriaId AND p.activo = true AND p.vendible = true AND p.isDeleted = false AND p.marca IS NOT NULL GROUP BY p.marca.id")
     List<Object[]> countProductosPorMarcaYCategoria(@Param("categoriaId") UUID categoriaId);
 
-    @Query("SELECT MIN(p.precioBase) FROM Producto p WHERE p.categoria.id = :categoriaId AND p.activo = true AND p.vendible = true AND p.isDeleted = false")
+    @Query("SELECT MIN(p.precioVenta) FROM Producto p WHERE p.categoria.id = :categoriaId AND p.activo = true AND p.vendible = true AND p.isDeleted = false")
     BigDecimal findMinPrecioActivoPorCategoria(@Param("categoriaId") UUID categoriaId);
 
-    @Query("SELECT MAX(p.precioBase) FROM Producto p WHERE p.categoria.id = :categoriaId AND p.activo = true AND p.vendible = true AND p.isDeleted = false")
+    @Query("SELECT MAX(p.precioVenta) FROM Producto p WHERE p.categoria.id = :categoriaId AND p.activo = true AND p.vendible = true AND p.isDeleted = false")
     BigDecimal findMaxPrecioActivoPorCategoria(@Param("categoriaId") UUID categoriaId);
 
     @Query("SELECT p FROM Producto p LEFT JOIN FETCH p.categoria LEFT JOIN FETCH p.marca WHERE p.categoria.id = :categoriaId AND p.activo = true AND p.vendible = true AND p.isDeleted = false")

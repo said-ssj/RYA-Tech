@@ -69,6 +69,8 @@ public class SecurityConfig {
                 })
                 .requestMatchers(org.springframework.http.HttpMethod.POST,"/api/v1/pagos/webhook").permitAll()
                 .requestMatchers("/api/v1/pagos/**").authenticated()
+                .requestMatchers(org.springframework.http.HttpMethod.POST,"/api/v1/productos/*/resenas").authenticated()
+                .requestMatchers("/api/v1/ayuda/consultas").authenticated()
                 .requestMatchers("/api/v1/cuenta/**", "/api/v1/pedidos/**", "/api/v1/favoritos/**",
                         "/api/v1/carrito/vincular", "/api/v1/pc-builder/configuraciones/**",
                         "/api/v1/pc-builder/configuraciones", "/api/v1/pc-builder/aplicar-cambio").authenticated()

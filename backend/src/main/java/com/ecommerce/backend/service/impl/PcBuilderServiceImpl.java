@@ -162,31 +162,7 @@ public class PcBuilderServiceImpl implements PcBuilderService {
 
         List<ProductoResumenDto> candidatos = tipoDto.getProductos();
 
-        // Si solicitan placas compatibles y hay un CPU en componentesActuales
-        UUID cpuId = null;
-        for (UUID compId : componentesActuales) {
-            if (especificacionCpuRepository.existsById(compId)) {
-                cpuId = compId;
-                break;
-            }
-        }
-
-        if (cpuId != null && ("PLACA".equalsIgnoreCase(tipo) || "MOTHERBOARD".equalsIgnoreCase(tipo) || "PLACAS-MADRE".equalsIgnoreCase(tipo))) {
-            List<CompatibilidadCpuPlaca> soportadas = compatibilidadCpuPlacaRepository.findPlacasSoportadasPorCpuId(cpuId);
-            Set<UUID> productosPlacaPermitidos = new HashSet<>();
-            for (CompatibilidadCpuPlaca rel : soportadas) {
-                if (rel.getRevisionPlaca() != null) {
-                    productosPlacaPermitidos.add(rel.getRevisionPlaca().getProductoId());
-                }
-            }
-
-            candidatos = tipoDto.getProductos().stream()
-                    .filter(p -> productosPlacaPermitidos.contains(p.getId()))
-                    .toList();
-        }
-
-        // Evaluar cada candidato con las fichas técnicas disponibles. Solo se descartan
-        // incompatibilidades demostradas; una selección todavía incompleta puede quedar POR_VERIFICAR.
+        // Starting a build needs no pair validation. Existing relationships must be verified.
         return candidatos.stream()
                 .filter(candidato -> noIntroduceIncompatibilidad(componentesActuales, candidato.getId()))
                 .toList();
@@ -199,12 +175,12 @@ public class PcBuilderServiceImpl implements PcBuilderService {
             ids.add(candidatoId);
             for (UUID id : ids) {
                 Producto producto = productoRepository.findConDetallesPorId(id).orElse(null);
-                if (producto == null || producto.getCategoria() == null) continue;
+                if (producto == null || producto.getCategoria() == null) return false;
                 String codigo = producto.getCategoria().getAcronimo();
                 if (codigo == null || codigo.isBlank()) codigo = producto.getCategoria().getSlug();
                 seleccion.put(normalizarTipo(codigo), id);
             }
-            ValidarCambioResponseDto resultado = validarCambio(ValidarCambioRequestDto.builder()
+            ValidarCambioRequestDto request = ValidarCambioRequestDto.builder()
                     .cpuId(valorTipo(seleccion, "CPU", "PROCESADOR", "PROCESADORES"))
                     .placaId(valorTipo(seleccion, "PLACA", "MB", "MOTHERBOARD", "PLACAS-MADRE", "PLACASMADRE"))
                     .ramId(valorTipo(seleccion, "RAM", "MEMORIA", "MEMORIA-RAM", "MEMORIARAM"))
@@ -213,8 +189,10 @@ public class PcBuilderServiceImpl implements PcBuilderService {
                     .gabineteId(valorTipo(seleccion, "CASE", "GABINETE", "GABINETES"))
                     .refrigeracionId(valorTipo(seleccion, "COOLER", "REFRIGERACION", "ENFRIAMIENTO-LIQUIDO"))
                     .componentesActuales(new ArrayList<>(new LinkedHashSet<>(seleccion.values())))
-                    .build());
-            return !"INCOMPATIBLE".equalsIgnoreCase(resultado.getEstadoCompatibilidad());
+                    .build();
+            if(request.getCpuId()!=null && request.getPlacaId()!=null
+                && !"VERIFICADA".equalsIgnoreCase(validarCpuPlaca(request).getEstadoCompatibilidad())) return false;
+            return validarReglasTecnicas(request).stream().allMatch(regla -> "VERIFICADA".equals(regla.estado()));
         } catch (RuntimeException ex) {
             return false;
         }
@@ -229,8 +207,18 @@ public class PcBuilderServiceImpl implements PcBuilderService {
     }
 
     private String normalizarTipo(String valor) {
-        return Optional.ofNullable(valor).orElse("")
-                .trim().toUpperCase(Locale.ROOT).replace('_', '-').replaceAll("\\s+", "");
+        String key=java.text.Normalizer.normalize(Optional.ofNullable(valor).orElse(""),java.text.Normalizer.Form.NFD)
+                .replaceAll("\\p{M}", "").toUpperCase(Locale.ROOT).replaceAll("[^A-Z0-9]", "");
+        return switch(key){
+            case "CPU","PROCESADOR","PROCESADORES" -> "CPU";
+            case "MB","PLACA","PLACAMADRE","PLACASMADRE","MOTHERBOARD","BOARD" -> "PLACA";
+            case "RAM","MEMORIA","MEMORIARAM","MEMORIASRAM" -> "RAM";
+            case "GPU","TARJETAGRAFICA","TARJETASGRAFICAS" -> "GPU";
+            case "PSU","FUENTE","FUENTEDEPODER","FUENTESDEPODER" -> "PSU";
+            case "CASE","GABINETE","GABINETES" -> "CASE";
+            case "COOLER","REFRIGERACION","ENFRIAMIENTOLIQUIDO" -> "COOLER";
+            default -> key;
+        };
     }
 
     @Override
@@ -861,7 +849,7 @@ public class PcBuilderServiceImpl implements PcBuilderService {
                 notas.add("Stock insuficiente para: " + prod.getNombre() + " (Solicitado: " + itemReq.getCantidad() + ", Disponible: " + stock + ")");
             }
 
-            BigDecimal subtotal = prod.getPrecioBase().multiply(BigDecimal.valueOf(itemReq.getCantidad()));
+            BigDecimal subtotal = prod.getPrecioVenta().multiply(BigDecimal.valueOf(itemReq.getCantidad()));
             precioTotal = precioTotal.add(subtotal);
 
             // Obtener potencia estimada
@@ -903,7 +891,7 @@ public class PcBuilderServiceImpl implements PcBuilderService {
                     .nombre(prod.getNombre())
                     .sku(prod.getSku())
                     .cantidad(itemReq.getCantidad())
-                    .precioUnitario(prod.getPrecioBase())
+                    .precioUnitario(prod.getPrecioVenta())
                     .subtotal(subtotal)
                     .stockDisponible(stock)
                     .stockSuficiente(suficienteStock)
